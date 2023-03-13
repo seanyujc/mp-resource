@@ -1,6 +1,6 @@
 {
   "name": "mp-resource",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "",
   "main": "dist/sg-resource.js",
   "types": "dist/sg-resource.d.ts",
