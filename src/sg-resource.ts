@@ -291,8 +291,6 @@ export function useResource<
       }
 
       promise.then((option) => {
-        console.log("request", option);
-
         wx.request<M>(option);
       });
     });
