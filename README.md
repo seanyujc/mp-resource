@@ -1,9 +1,10 @@
 # mp-resource
+
 Access resource management for the service interface of wechat miniprogram, you can get two configuration lists
 
 ## Install
 
-```
+```js
 npm i mp-resource
 ```
 
@@ -38,6 +39,7 @@ declare namespace MyMiniprogram {
       resource: Resource
     };
   }
+}
 ```
 
 Create two configuration files.
@@ -95,7 +97,9 @@ export const sysEnvConfig: ISite<
   globalData: {},
 };
 ```
+
 Create a startup file
+
 ```ts
 // miniprogram/resource.ts
 import { sysEnvConfig } from "./config/config";
