@@ -1,0 +1,24 @@
+{
+  "name": "mp-resource",
+  "version": "1.0.1",
+  "description": "",
+  "main": "dist/sg-resource.js",
+  "types": "dist/sg-resource.d.ts",
+  "scripts": {
+    "build": "rollup -c ./rollup.config.mjs",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@rollup/plugin-strip": "^3.0.2",
+    "@rollup/plugin-typescript": "^11.0.0",
+    "miniprogram-api-typings": "^3.9.0",
+    "rollup": "^3.18.0",
+    "rollup-plugin-delete": "^2.0.0",
+    "rollup-plugin-dts": "^5.2.0",
+    "tslib": "^2.5.0",
+    "typescript": "^4.9.5"
+  }
+}
