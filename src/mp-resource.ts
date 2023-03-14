@@ -4,16 +4,22 @@ import {
   InterceptorManager,
   RequestCallback,
   ResponseCallback,
+  ResponseCallbackParams,
 } from "./interceptor-manager";
 
-export interface IAppOption<E> extends WechatMiniprogram.IAnyObject {
+export interface IAppOption<
+  M extends IRestResponse,
+  H extends string,
+  D extends Record<string, any>
+> extends WechatMiniprogram.IAnyObject {
   globalData: Required<{
-    runtimes: E;
+    resource: IResource<M, H, D>;
   }>;
 }
 
 export interface IResource<
   M extends IRestResponse,
+  H extends string,
   D extends Record<string, any>
 > {
   get<T extends string | number | Record<string, any> | ArrayBuffer = any>(
@@ -60,6 +66,7 @@ export interface IResource<
       | "CONNECT",
     urlKey: string
   ): string;
+  getHost(hostKey: H): IHost<string> | undefined;
   interceptors: {
     request: InterceptorManager<M, RequestCallback<M>>;
     response: InterceptorManager<M, ResponseCallback<M>>;
@@ -71,7 +78,7 @@ export function useResource<
   M extends IRestResponse,
   H extends string = string,
   D extends Record<string, any> = Record<string, any>
->(sysEnvConfig: ISite<string, H>): IResource<M, D> {
+>(sysEnvConfig: ISite<string, H>): IResource<M, H, D> {
   const interceptors = {
     request: new InterceptorManager<M, RequestCallback<M>>(),
     response: new InterceptorManager<M, ResponseCallback<M>>(),
@@ -226,22 +233,22 @@ export function useResource<
           });
 
           let i = 0;
-          let promise = Promise.resolve(res);
+          let promise = Promise.resolve<ResponseCallbackParams<M>>({
+            result: res,
+            urlKey,
+          });
           let len = responseInterceptorChain.length;
 
           while (i < len) {
             const { fulfilled, rejected } = responseInterceptorChain[i];
             if (isPromiseLike(fulfilled)) {
-              promise = promise.then(
-                (res) => fulfilled({ result: res, urlKey }),
-                rejected
-              );
+              promise = promise.then((res) => fulfilled(res), rejected);
             } else {
               promise = promise.then(
                 (res) =>
                   new Promise((resolve, reject) => {
                     try {
-                      resolve(fulfilled({ result: res, urlKey }));
+                      resolve(fulfilled(res));
                     } catch (error) {
                       reject(error);
                     }
@@ -252,8 +259,9 @@ export function useResource<
             i++;
           }
 
-          promise.then((res: any) => {
-            resolve(res as T);
+          promise.then(({ result }) => {
+            // only is data returned
+            resolve((result.data as any) as T);
           }, reject);
         },
         fail: (err: WechatMiniprogram.Err) => {
@@ -296,7 +304,7 @@ export function useResource<
     });
   }
 
-  return { get, post, put, remove, getUrl, interceptors, envData };
+  return { get, post, put, remove, getUrl, getHost, interceptors, envData };
 }
 
 export type ApiUrl<HostKeys> = Record<

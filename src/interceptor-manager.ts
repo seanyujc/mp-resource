@@ -53,9 +53,9 @@ export type RequestCallback<
   | WechatMiniprogram.RequestOption<M>;
 
 export type ResponseCallback<
-  M extends string | Record<string, any> | ArrayBuffer
+  M extends string | Record<string, any> | ArrayBuffer = any
 > = (
   params: ResponseCallbackParams<M>
 ) =>
-  | Promise<WechatMiniprogram.RequestSuccessCallbackResult<M>>
-  | WechatMiniprogram.RequestSuccessCallbackResult<M>;
+  | Promise<ResponseCallbackParams<M>>
+  | ResponseCallbackParams<M>;

@@ -16,27 +16,26 @@ Create your own type definition file my-miniprogram.d.ts:
 declare namespace MyMiniprogram {
   type EnvKeys = "DEV" | "SIT" | "UAT" | "PROD";
   type HostKeys = "base" | "news" | "sport";
+  type Resource<M, H, D> =
+    import("../miniprogram/node_modules/mp-resource").IResource<M, H, D>;
+  type IRestResponse<T> =
+    import("../miniprogram/node_modules/mp-resource").IRestResponse<T>;
+
   interface RestResponse<
     T extends string | number | Record<string, any> | ArrayBuffer =
       | string
       | number
       | Record<string, any>
       | ArrayBuffer
-  > extends import("../miniprogram/node_modules/mp-resource").IRestResponse<T> {
-    data: T;
-    status: number;
+  > extends IRestResponse<T> {
     errorCode: number | null;
     errorMessage: string;
   }
-  type Resource = import("../miniprogram/node_modules/mp-resource").Resource<
-    RestResponse<any>,
-    HostKeys,
-    EnvData
-  >;
-  type IMyAppOption = import("../miniprogram/node_modules/mp-resource").IAppOption<EnvKeys>;
-  interface IAppOption extends IMyAppOption {
+
+  interface IAppOption {
     globalData: {
-      resource: Resource
+      accessToken?: string;
+      resource: Resource<RestResponse, HostKeys, EnvData>;
     };
   }
 }
@@ -49,7 +48,12 @@ Create two configuration files.
 import { ApiUrl } from "mp-resource";
 
 export const apiUrl: ApiUrl<MyMiniprogram.HostKeys> = {
-  get: {},
+  get: {
+    getNewsDetails: {
+      hostKey: "news",
+      path: "/details"
+    }
+  },
   post: {},
   put: {},
   delete: {},
@@ -106,4 +110,42 @@ import { sysEnvConfig } from "./config/config";
 import { useResource } from "mp-resource";
 
 export const resource = useResource(sysEnvConfig);
+```
+
+Using in app
+
+```ts
+// miniprogram/app.ts
+import { resource } from "./resource";
+
+App<TlDoctorMiniprogram.IAppOption>({
+  globalData: {
+    resource,
+  },
+  onLaunch() {
+    this.globalData.resource.interceptors.request.use((option) => {
+      if (this.globalData.accessToken) {
+        option.header = {
+          ...option.header,
+          "access-token": this.globalData.accessToken,
+        };
+      } else {
+        if (option.header) {
+          delete option.header["access-token"];
+        }
+      }
+      return option;
+    });
+    this.globalData.resource.interceptors.response.use(
+      ({ result, urlKey }) =>
+        new Promise((resolve, reject) => {
+          if (result.data.status === 0) {
+            resolve({ result, urlKey });
+          } else {
+            reject(result.data);
+          }
+        })
+    );
+  }
+})
 ```

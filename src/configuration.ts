@@ -1,4 +1,4 @@
-import { ISite, ISystem } from "./sg-resource";
+import { ISite, ISystem } from "./mp-resource";
 
 export const autoConfigure = (
   sysEnvConfig: ISite<string, string>

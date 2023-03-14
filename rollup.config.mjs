@@ -6,7 +6,7 @@ import strip from "@rollup/plugin-strip";
 import del from "rollup-plugin-delete";
 
 const config = {
-  input: "src/sg-resource.ts",
+  input: "src/mp-resource.ts",
   output: {
     dir: "dist",
     format: "cjs",
