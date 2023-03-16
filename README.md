@@ -49,6 +49,7 @@ import { ApiUrl } from "mp-resource";
 
 export const apiUrl: ApiUrl<MyMiniprogram.HostKeys> = {
   get: {
+    // GET http://localhost:8080/news-svc/details
     getNewsDetails: {
       hostKey: "news",
       path: "/details"
@@ -140,6 +141,8 @@ App<TlDoctorMiniprogram.IAppOption>({
       ({ result, urlKey }) =>
         new Promise((resolve, reject) => {
           if (result.data.status === 0) {
+            // unpack
+            result.data = result.data.data as any;
             resolve({ result, urlKey });
           } else {
             reject(result.data);
@@ -148,4 +151,22 @@ App<TlDoctorMiniprogram.IAppOption>({
     );
   }
 })
+```
+
+Use Resource send requests:  
+
+```ts
+// miniprogram/service/mews-service.ts
+import { resource } from "../resource";
+
+export function useNewsService(){
+
+  function getNewsDetails(id: string){
+    // send GET request to "http://localhost:8080/news-svc/details/[id][0]"
+    return resource.get("getNewsDetails", {}, [id]);
+  }
+
+  return { getNewsDetails };
+}
+
 ```
