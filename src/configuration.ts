@@ -4,25 +4,29 @@ export const autoConfigure = (
   sysEnvConfig: ISite<string, string>
 ): ISystem<string, string> | undefined => {
   const runtimes = sysEnvConfig.runtimes;
-  const curConfig = sysEnvConfig.systems.find((el) => el.key === runtimes);
-  if (curConfig) {
-    curConfig.hosts.forEach((el) => {
-      if (el.url) {
-        for (const key in curConfig.data) {
-          if (Object.prototype.hasOwnProperty.call(curConfig.data, key)) {
-            const value = curConfig.data[key];
-            el.url = el.url.replace("{{data." + key + "}}", value);
-          }
-          const globalConf = sysEnvConfig.hosts?.find((el) => el.key === key);
-          if (globalConf) {
-            el.header = { ...globalConf.header, ...el.header };
+  const envConfig = sysEnvConfig.systems.find((el) => el.key === runtimes);
+  if (envConfig) {
+    envConfig.hosts.forEach((envHost) => {
+      if (envHost.url) {
+        const data = { ...sysEnvConfig.globalData, ...envConfig.data };
+        for (const key in data) {
+          if (Object.prototype.hasOwnProperty.call(data, key)) {
+            const value = data[key];
+            const reg = RegExp("{{(data.)*" + key + "}}");
+            envHost.url = envHost.url.replace(reg, value);
           }
         }
       } else {
-        el.url = "";
+        envHost.url = "";
+      }
+      const globalConf = sysEnvConfig.hosts?.find(
+        (host) => host.key === envHost.key
+      );
+      if (globalConf) {
+        envHost.header = { ...globalConf.header, ...envHost.header };
       }
     });
-    return curConfig;
+    return envConfig;
   }
   return;
 };
