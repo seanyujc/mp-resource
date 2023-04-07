@@ -163,7 +163,7 @@ export function useResource<
     return curConfig?.hosts.find((el) => el.key === hostKey);
   }
 
-  function getUrl(
+  function getUrlInfo(
     method:
       | "OPTIONS"
       | "GET"
@@ -187,6 +187,7 @@ export function useResource<
           | "trace"
           | "connect"
       ];
+
     const url = api[urlKey];
     let hostKey: H = "" as H;
     let path = urlKey;
@@ -196,28 +197,42 @@ export function useResource<
         hostKey = urls[0].replace("Host", "") as H;
         path = urls[1];
       } else {
-        return url;
+        return { url };
       }
     } else if (typeof url === "object") {
       hostKey = url.hostKey;
       path = url.path;
     }
     const host = getHost(hostKey);
-    if (host) {
-      return host.url + path;
-    } else {
-      return path;
-    }
+    return { host, url: host ? host.url + path : path };
+  }
+
+  function getUrl(
+    method:
+      | "OPTIONS"
+      | "GET"
+      | "HEAD"
+      | "POST"
+      | "PUT"
+      | "DELETE"
+      | "TRACE"
+      | "CONNECT",
+    urlKey: string
+  ) {
+    const { url } = getUrlInfo(method, urlKey);
+    return url;
   }
 
   function request<
     T extends string | number | Record<string, any> | ArrayBuffer
   >({ method, urlKey, data, pathVariable, header }: ResourceRequestOptions) {
     return new Promise<T>((resolve, reject) => {
-      let url = getUrl(method, urlKey);
+      let { host, url } = getUrlInfo(method, urlKey);
       if (pathVariable && pathVariable instanceof Array) {
         url = [url, ...pathVariable].join("/");
       }
+
+      header = { ...host?.header, ...header };
       let option: WechatMiniprogram.RequestOption<M> = {
         method,
         url,
@@ -261,7 +276,7 @@ export function useResource<
 
           promise.then(({ result }) => {
             // only is data returned
-            resolve((result.data as any) as T);
+            resolve(result.data as any as T);
           }, reject);
         },
         fail: (err: WechatMiniprogram.Err) => {
