@@ -405,7 +405,11 @@ export interface ResourceOptions<
  * request return type
  */
 export interface IRestResponse<
-  T extends string | number | Record<string, any> | ArrayBuffer = string
+  T extends string | number | Record<string, any> | ArrayBuffer =
+    | string
+    | number
+    | Record<string, any>
+    | ArrayBuffer
 > {
   data: T;
   status: number;
