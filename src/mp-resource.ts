@@ -251,6 +251,7 @@ export function useResource<
           let promise = Promise.resolve<ResponseCallbackParams<M>>({
             result: res,
             urlKey,
+            method,
           });
           let len = responseInterceptorChain.length;
 

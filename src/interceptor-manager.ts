@@ -42,6 +42,7 @@ export type Handler<
 export type ResponseCallbackParams<M extends string | Record<string, any> | ArrayBuffer> = {
   result: WechatMiniprogram.RequestSuccessCallbackResult<M>;
   urlKey: string;
+  method: "OPTIONS" | "GET" | "HEAD" | "POST" | "PUT" | "DELETE" | "TRACE" | "CONNECT"
 };
 
 export type RequestCallback<
