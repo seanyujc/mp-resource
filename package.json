@@ -19,7 +19,7 @@
   "devDependencies": {
     "@rollup/plugin-strip": "^3.0.2",
     "@rollup/plugin-typescript": "^11.0.0",
-    "@types/uuid": "^9.0.1",
+    "@types/uuid": "^3.4.10",
     "miniprogram-api-typings": "^3.9.0",
     "rollup": "^3.18.0",
     "rollup-plugin-delete": "^2.0.0",
@@ -28,6 +28,6 @@
     "typescript": "^4.9.5"
   },
   "dependencies": {
-    "uuid": "^9.0.0"
+    "uuid": "~3.2.1"
   }
 }
