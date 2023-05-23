@@ -291,7 +291,7 @@ export function useResource<
         }
       });
       let i = 0;
-      let promise = Promise.resolve(option);
+      let promise = Promise.resolve({ option, urlKey, method });
       let len = requestInterceptorChain.length;
 
       while (i < len) {
@@ -314,7 +314,7 @@ export function useResource<
         i++;
       }
 
-      promise.then((option) => {
+      promise.then(({ option }) => {
         wx.request<M>(option);
       });
     });

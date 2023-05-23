@@ -39,24 +39,48 @@ export type Handler<
   rejected?: () => Promise<any>;
 };
 
-export type ResponseCallbackParams<M extends string | Record<string, any> | ArrayBuffer> = {
+export type RequestCallbackParams<
+  M extends string | Record<string, any> | ArrayBuffer
+> = {
+  option: WechatMiniprogram.RequestOption<M>;
+  urlKey: string;
+  method:
+    | "OPTIONS"
+    | "GET"
+    | "HEAD"
+    | "POST"
+    | "PUT"
+    | "DELETE"
+    | "TRACE"
+    | "CONNECT";
+};
+
+export type ResponseCallbackParams<
+  M extends string | Record<string, any> | ArrayBuffer
+> = {
   result: WechatMiniprogram.RequestSuccessCallbackResult<M>;
   urlKey: string;
-  method: "OPTIONS" | "GET" | "HEAD" | "POST" | "PUT" | "DELETE" | "TRACE" | "CONNECT"
+  method:
+    | "OPTIONS"
+    | "GET"
+    | "HEAD"
+    | "POST"
+    | "PUT"
+    | "DELETE"
+    | "TRACE"
+    | "CONNECT";
 };
 
 export type RequestCallback<
   M extends string | Record<string, any> | ArrayBuffer = any
 > = (
-  options: WechatMiniprogram.RequestOption<M>
+  params: RequestCallbackParams<M>
 ) =>
-  | Promise<WechatMiniprogram.RequestOption<M>>
-  | WechatMiniprogram.RequestOption<M>;
+  | Promise<RequestCallbackParams<M>>
+  | RequestCallbackParams<M>;
 
 export type ResponseCallback<
   M extends string | Record<string, any> | ArrayBuffer = any
 > = (
   params: ResponseCallbackParams<M>
-) =>
-  | Promise<ResponseCallbackParams<M>>
-  | ResponseCallbackParams<M>;
+) => Promise<ResponseCallbackParams<M>> | ResponseCallbackParams<M>;
