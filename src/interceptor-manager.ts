@@ -53,6 +53,7 @@ export type RequestCallbackParams<
     | "DELETE"
     | "TRACE"
     | "CONNECT";
+  traceId: string;
 };
 
 export type ResponseCallbackParams<
@@ -69,15 +70,14 @@ export type ResponseCallbackParams<
     | "DELETE"
     | "TRACE"
     | "CONNECT";
+  traceId: string;
 };
 
 export type RequestCallback<
   M extends string | Record<string, any> | ArrayBuffer = any
 > = (
   params: RequestCallbackParams<M>
-) =>
-  | Promise<RequestCallbackParams<M>>
-  | RequestCallbackParams<M>;
+) => Promise<RequestCallbackParams<M>> | RequestCallbackParams<M>;
 
 export type ResponseCallback<
   M extends string | Record<string, any> | ArrayBuffer = any
