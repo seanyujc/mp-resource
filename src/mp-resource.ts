@@ -6,7 +6,7 @@ import {
   ResponseCallback,
   ResponseCallbackParams,
 } from "./interceptor-manager";
-import { v4 as uuidv4 } from "uuid";
+import { generateUUID } from "./utils";
 
 export interface IAppOption<
   M extends IRestResponse,
@@ -228,45 +228,82 @@ export function useResource<
     T extends string | number | Record<string, any> | ArrayBuffer
   >({ method, urlKey, data, pathVariable, header }: ResourceRequestOptions) {
     return new Promise<T>((resolve, reject) => {
-      let { host, url } = getUrlInfo(method, urlKey);
-      if (pathVariable && pathVariable instanceof Array) {
-        url = [url, ...pathVariable].join("/");
-      }
+      generateUUID()
+        .then((traceId) => {
+          let { host, url } = getUrlInfo(method, urlKey);
+          if (pathVariable && pathVariable instanceof Array) {
+            url = [url, ...pathVariable].join("/");
+          }
 
-      header = { ...host?.header, ...header };
-      const traceId = uuidv4({
-        random: [
-          0x10, 0x91, 0x56, 0xbe, 0xc4, 0xfb, 0xc1, 0xea, 0x71, 0xb4, 0xef,
-          0xe1, 0x67, 0x1c, 0x58, 0x36,
-        ],
-      });
-      let option: WechatMiniprogram.RequestOption<M> = {
-        method,
-        url,
-        data,
-        header,
-        success: (res) => {
-          const responseInterceptorChain: Handler<M, ResponseCallback<M>>[] =
-            [];
-          interceptors.response.forEach((handler) => {
+          header = { ...host?.header, ...header };
+          let option: WechatMiniprogram.RequestOption<M> = {
+            method,
+            url,
+            data,
+            header,
+            success: (res) => {
+              const responseInterceptorChain: Handler<
+                M,
+                ResponseCallback<M>
+              >[] = [];
+              interceptors.response.forEach((handler) => {
+                if (handler != null) {
+                  responseInterceptorChain.unshift(handler);
+                }
+              });
+
+              let i = 0;
+              let promise = Promise.resolve<ResponseCallbackParams<M>>({
+                result: res,
+                urlKey,
+                method,
+                traceId,
+              });
+              let len = responseInterceptorChain.length;
+
+              while (i < len) {
+                const { fulfilled, rejected } = responseInterceptorChain[i];
+                if (isPromiseLike(fulfilled)) {
+                  promise = promise.then((res) => fulfilled(res), rejected);
+                } else {
+                  promise = promise.then(
+                    (res) =>
+                      new Promise((resolve, reject) => {
+                        try {
+                          resolve(fulfilled(res));
+                        } catch (error) {
+                          reject(error);
+                        }
+                      }),
+                    rejected
+                  );
+                }
+                i++;
+              }
+
+              promise.then(({ result }) => {
+                // only is data returned
+                resolve(result.data as any as T);
+              }, reject);
+            },
+            fail: (err: WechatMiniprogram.Err) => {
+              reject(err);
+            },
+          };
+          const requestInterceptorChain: Handler<M, RequestCallback<M>>[] = [];
+          interceptors.request.forEach((handler) => {
             if (handler != null) {
-              responseInterceptorChain.unshift(handler);
+              requestInterceptorChain.unshift(handler);
             }
           });
-
           let i = 0;
-          let promise = Promise.resolve<ResponseCallbackParams<M>>({
-            result: res,
-            urlKey,
-            method,
-            traceId,
-          });
-          let len = responseInterceptorChain.length;
+          let promise = Promise.resolve({ option, urlKey, method, traceId });
+          let len = requestInterceptorChain.length;
 
           while (i < len) {
-            const { fulfilled, rejected } = responseInterceptorChain[i];
+            const { fulfilled, rejected } = requestInterceptorChain[i];
             if (isPromiseLike(fulfilled)) {
-              promise = promise.then((res) => fulfilled(res), rejected);
+              promise = promise.then(fulfilled, rejected);
             } else {
               promise = promise.then(
                 (res) =>
@@ -283,48 +320,17 @@ export function useResource<
             i++;
           }
 
-          promise.then(({ result }) => {
-            // only is data returned
-            resolve(result.data as any as T);
-          }, reject);
-        },
-        fail: (err: WechatMiniprogram.Err) => {
-          reject(err);
-        },
-      };
-      const requestInterceptorChain: Handler<M, RequestCallback<M>>[] = [];
-      interceptors.request.forEach((handler) => {
-        if (handler != null) {
-          requestInterceptorChain.unshift(handler);
-        }
-      });
-      let i = 0;
-      let promise = Promise.resolve({ option, urlKey, method, traceId });
-      let len = requestInterceptorChain.length;
-
-      while (i < len) {
-        const { fulfilled, rejected } = requestInterceptorChain[i];
-        if (isPromiseLike(fulfilled)) {
-          promise = promise.then(fulfilled, rejected);
-        } else {
-          promise = promise.then(
-            (res) =>
-              new Promise((resolve, reject) => {
-                try {
-                  resolve(fulfilled(res));
-                } catch (error) {
-                  reject(error);
-                }
-              }),
-            rejected
-          );
-        }
-        i++;
-      }
-
-      promise.then(({ option }) => {
-        wx.request<M>(option);
-      });
+          promise.then(({ option }) => {
+            wx.request<M>(option);
+          });
+        })
+        .catch(reject);
+      // const traceId = uuidv4({
+      //   random: [
+      //     0x10, 0x91, 0x56, 0xbe, 0xc4, 0xfb, 0xc1, 0xea, 0x71, 0xb4, 0xef,
+      //     0xe1, 0x67, 0x1c, 0x58, 0x36,
+      //   ],
+      // });
     });
   }
 
